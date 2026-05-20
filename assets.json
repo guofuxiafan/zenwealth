@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "amount": 200.0,
+      "name": "支付宝零钱",
+      "type": "CASH"
+    },
+    {
+      "amount": 5200.0,
+      "interestRate": 1.2,
+      "name": "中国工商银行",
+      "type": "DEPOSIT"
+    },
+    {
+      "amount": 20000.0,
+      "name": "微信零钱",
+      "type": "CASH"
+    },
+    {
+      "code": "600900.SH",
+      "quantity": 200.0,
+      "unitPrice": 27.25,
+      "name": "长江电力",
+      "type": "STOCK"
+    },
+    {
+      "code": "5555",
+      "quantity": 50.0,
+      "unitPrice": 100.0,
+      "name": "china",
+      "type": "BOND"
+    },
+    {
+      "code": "518880.SH",
+      "quantity": 600.0,
+      "unitPrice": 9.515,
+      "name": "5.12",
+      "type": "GOLD"
+    }
+  ]
+}
