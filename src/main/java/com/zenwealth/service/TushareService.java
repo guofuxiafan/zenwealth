@@ -39,10 +39,24 @@ public class TushareService {
             case GOLD, BOND -> "close";
             default -> throw new IllegalArgumentException("Unsupported type: " + type);
         };
+        // 逐日向前回退，最多尝试5个交易日
+        // 盘中时 daily/fund_daily 接口可能还没有生成当天的日K线数据
         String tradeDate = getLatestTradeDate();
-        JsonObject params = buildParams(code, tradeDate);
-        JsonObject response = call(apiName, params);
-        return extractFromResponse(response, priceField);
+        for (int i = 0; i < 5; i++) {
+            JsonObject params = buildParams(code, tradeDate);
+            JsonObject response = call(apiName, params);
+            try {
+                return extractFromResponse(response, priceField);
+            } catch (IOException e) {
+                // 当天无数据 → 尝试前一天 (跳过周末)
+                LocalDate prev = LocalDate.parse(tradeDate, DATE_FMT).minusDays(1);
+                int wd = prev.getDayOfWeek().getValue();
+                if (wd == 6) prev = prev.minusDays(1);  // 周六→周五
+                if (wd == 7) prev = prev.minusDays(2);  // 周日→周五
+                tradeDate = prev.format(DATE_FMT);
+            }
+        }
+        throw new IOException("No data for " + code + " after retrying 5 prior trading days");
     }
 
     private JsonObject buildParams(String code, String tradeDate) {

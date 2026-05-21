@@ -293,32 +293,43 @@ public class MainController {
         refreshButton.setDisable(true);
         refreshButton.setText("刷新中...");
         new Thread(() -> {
-            try {
-                for (Asset a : portfolio.getAssets()) {
-                    if (a instanceof EquityAsset ea) {
-                        try {
-                            ea.unitPrice = tushare.fetchPrice(ea.code, ea.type);
-                        } catch (IOException e) {
-                            System.err.println("Failed: " + ea.code + " - " + e.getMessage());
-                        }
+            int success = 0, failed = 0;
+            StringBuilder errors = new StringBuilder();
+            for (Asset a : portfolio.getAssets()) {
+                if (a instanceof EquityAsset ea) {
+                    try {
+                        ea.unitPrice = tushare.fetchPrice(ea.code, ea.type);
+                        success++;
+                    } catch (IOException e) {
+                        failed++;
+                        errors.append(ea.code).append(": ").append(e.getMessage()).append("\n");
+                        System.err.println("Failed: " + ea.code + " - " + e.getMessage());
                     }
                 }
-                Platform.runLater(() -> {
-                    saveData();
-                    rebuildTable();
-                    updateStackedBar();
-                    refreshTotal();
-                    refreshSidebar();
-                    refreshButton.setDisable(false);
-                    refreshButton.setText("刷新");
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    showError("刷新失败: " + e.getMessage());
-                    refreshButton.setDisable(false);
-                    refreshButton.setText("刷新");
-                });
             }
+            final int s = success, f = failed;
+            final String errMsg = errors.toString();
+            Platform.runLater(() -> {
+                saveData();
+                rebuildTable();
+                updateStackedBar();
+                refreshTotal();
+                refreshSidebar();
+                refreshButton.setDisable(false);
+                refreshButton.setText("刷新");
+                if (f > 0) {
+                    String summary = "刷新完成：" + s + " 只成功，" + f + " 只失败";
+                    if (s == 0) {
+                        showError(summary + "\n\n" + errMsg);
+                    } else {
+                        // 部分成功时用信息对话框提示
+                        Alert info = new Alert(Alert.AlertType.INFORMATION,
+                            summary + "\n\n" + errMsg, ButtonType.OK);
+                        info.setTitle("刷新结果");
+                        info.show();
+                    }
+                }
+            });
         }).start();
     }
 
